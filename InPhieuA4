@@ -1,1 +1,644 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phiếu Xuất Kho</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        body {
+            font-family: 'Times New Roman', serif;
+            line-height: 1.4;
+            color: #333;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .title {
+            font-size: 22px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+        }
+
+        .date-row {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .info-section {
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: flex;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .form-row-left {
+            display: flex;
+            width: 50%;
+            align-items: center;
+        }
+
+        .form-row-right {
+            display: flex;
+            width: 50%;
+            align-items: center;
+        }
+
+        .label {
+            font-weight: normal;
+            margin-right: 10px;
+            white-space: nowrap;
+        }
+
+        .value {
+            flex: 1;
+            padding: 2px 5px;
+            min-height: 25px;
+        }
+
+        .purpose-row {
+            display: flex;
+            margin-bottom: 20px;
+            align-items: center;
+            width: 100%;
+        }
+
+        .table-section {
+            margin: 20px 0;
+        }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        .items-table th,
+        .items-table td {
+            border: 1px solid #333;
+            padding: 8px;
+            font-size: 14px;
+        }
+
+        .items-table th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        /* Căn giữa cho cột STT */
+        .items-table th:nth-child(1),
+        .items-table td:nth-child(1) { 
+            width: 8%; 
+            text-align: center;
+        }
+
+        /* Căn trái cho Mã Sản Phẩm */
+        .items-table th:nth-child(2),
+        .items-table td:nth-child(2) { 
+            width: 20%; 
+            text-align: left;
+            padding-left: 12px;
+        }
+
+        /* Căn trái cho Tên Sản Phẩm */
+        .items-table th:nth-child(3),
+        .items-table td:nth-child(3) { 
+            width: 30%; 
+            text-align: left;
+            padding-left: 12px;
+        }
+
+        /* Căn trái cho ĐVT */
+        .items-table th:nth-child(4),
+        .items-table td:nth-child(4) { 
+            width: 10%; 
+            text-align: left;
+            padding-left: 12px;
+        }
+
+        /* Căn phải và bôi đậm cho Số Lượng */
+        .items-table th:nth-child(5),
+        .items-table td:nth-child(5) { 
+            width: 12%; 
+            text-align: right;
+            padding-right: 12px;
+            font-weight: bold;
+        }
+
+        /* Căn trái cho Ghi Chú */
+        .items-table th:nth-child(6),
+        .items-table td:nth-child(6) { 
+            width: 20%; 
+            text-align: left;
+            padding-left: 12px;
+        }
+
+        .total-row {
+            font-weight: bold;
+            background-color: #f9f9f9;
+        }
+
+        .signature-section {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+            gap: 10px;
+        }
+
+        .signature-box {
+            text-align: center;
+            width: 24%;
+        }
+
+        .signature-title {
+            font-weight: normal;
+            margin-bottom: 50px;
+            font-size: 14px;
+        }
+
+        .signature-line {
+            margin: 5px 0;
+            height: 1px;
+        }
+
+        .buttons {
+            text-align: center;
+            margin: 20px 0;
+            gap: 10px;
+        }
+
+        .btn {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 0 5px;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-success {
+            background-color: #28a745;
+        }
+
+        .btn-success:hover {
+            background-color: #1e7e34;
+        }
+
+        @media print {
+            body {
+                background-color: white;
+                padding: 0;
+            }
+            .container {
+                box-shadow: none;
+                max-width: none;
+                margin: 0;
+                padding: 20px;
+            }
+            .buttons {
+                display: none;
+            }
+        }
+
+        .two-column {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="printArea">
+        <!-- Header -->
+        <div class="header">
+            <div class="title">PHIẾU XUẤT KHO</div>
+            <div class="date-row">
+                Ngày Tháng: <span id="ngayXuat"></span>
+            </div>
+        </div>
+
+        <!-- Thông tin cơ bản -->
+        <div class="info-section">
+            <div class="two-column">
+                <div class="form-row-left">
+                    <span class="label">Khách Hàng:</span>
+                    <span class="value" id="tenKhachHang"></span>
+                </div>
+                <div class="form-row-right">
+                    <span class="label">Số Phiếu:</span>
+                    <span class="value" id="xuatKhoId"></span>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <span class="label">Địa Chỉ:</span>
+                <span class="value" id="diaChi"></span>
+            </div>
+
+            <div class="form-row">
+                <span class="label">Số Điện Thoại:</span>
+                <span class="value" id="sdt"></span>
+            </div>
+
+            <div class="purpose-row">
+                <span class="label">Nội dung xuất:</span>
+                <span class="value" id="noiDungXuat"></span>
+            </div>
+        </div>
+
+        <!-- Bảng chi tiết hàng hóa -->
+        <div class="table-section">
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>Mã Sản Phẩm</th>
+                        <th>Tên Sản Phẩm</th>
+                        <th>Đvt</th>
+                        <th>SL Xuất</th>
+                        <th>Ghi Chú</th>
+                    </tr>
+                </thead>
+                <tbody id="itemsTableBody">
+                    <!-- Dữ liệu sẽ được thêm bằng JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Chữ ký -->
+        <div class="signature-section">
+            <div class="signature-box">
+                <div class="signature-title">Người Lập Phiếu<br><i>(Ký, họ tên)</i></div>
+                <div class="signature-line"></div>
+                <div id="nguoiLapPhieu"></div>
+            </div>
+            <div class="signature-box">
+                <div class="signature-title">Trưởng Bộ Phận<br><i>(Ký, họ tên)</i></div>
+                <div class="signature-line"></div>
+                <div id="truongBoPhan"></div>
+            </div>
+            <div class="signature-box">
+                <div class="signature-title">Tài Xế<br><i>(Ký, họ tên)</i></div>
+                <div class="signature-line"></div>
+                <div id="taiXe"></div>
+            </div>
+            <div class="signature-box">
+                <div class="signature-title">Người Nhận Hàng<br><i>(Ký, họ tên)</i></div>
+                <div class="signature-line"></div>
+                <div id="nguoiNhanHangKy"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="buttons">
+        <button class="btn" onclick="printForm()">In phiếu</button>
+        <button class="btn btn-success" onclick="exportToPDF()">Xuất PDF</button>
+    </div>
+
+    <script>
+        // Hàm lấy parameters từ URL với decode UTF-8
+        function getUrlParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const value = urlParams.get(name);
+            if (value) {
+                try {
+                    // Decode UTF-8 để hiển thị đúng tiếng Việt có dấu
+                    return decodeURIComponent(value);
+                } catch (e) {
+                    return value;
+                }
+            }
+            return '';
+        }
+
+        // Hàm format ngày
+        function formatDate(dateString) {
+            if (!dateString) {
+                const today = new Date();
+                return today.toLocaleDateString('vi-VN');
+            }
+            const date = new Date(dateString);
+            return date.toLocaleDateString('vi-VN');
+        }
+
+        // Hàm load dữ liệu từ URL hoặc object
+        function loadData(data = null) {
+            if (data) {
+                // Load từ object data
+                loadDataFromObject(data);
+            } else {
+                // Load từ URL parameters
+                loadDataFromUrl();
+            }
+        }
+
+        // Hàm load dữ liệu từ object
+        function loadDataFromObject(data) {
+            // Load thông tin cơ bản
+            document.getElementById('ngayXuat').textContent = formatDate(data.ngay_xuat || data[0]?.ngay_xuat);
+            document.getElementById('tenKhachHang').textContent = data.ten_khach_hang || data[0]?.ten_khach_hang || '';
+            document.getElementById('xuatKhoId').textContent = data.xuat_kho_id || data[0]?.xuat_kho_id || '';
+            document.getElementById('diaChi').textContent = data.dia_chi || data[0]?.dia_chi || '';
+            document.getElementById('sdt').textContent = data.sdt || data[0]?.sdt || '';
+            document.getElementById('noiDungXuat').textContent = data.noi_dung_xuat || data[0]?.noi_dung_xuat || '';
+            
+            // Set chữ ký mặc định
+            document.getElementById('nguoiLapPhieu').textContent = '';
+            document.getElementById('truongBoPhan').textContent = '';
+            document.getElementById('taiXe').textContent = '';
+            document.getElementById('nguoiNhanHangKy').textContent = data.ten_khach_hang || data[0]?.ten_khach_hang || '';
+
+            // Load chi tiết hàng hóa từ array hoặc single item
+            loadItemsFromObject(data);
+        }
+
+        // Hàm load dữ liệu từ URL
+        function loadDataFromUrl() {
+            // Load thông tin cơ bản từ URL parameters
+            document.getElementById('ngayXuat').textContent = formatDate(getUrlParameter('ngay_xuat'));
+            document.getElementById('tenKhachHang').textContent = getUrlParameter('ten_khach_hang') || '';
+            document.getElementById('xuatKhoId').textContent = getUrlParameter('xuat_kho_id') || '';
+            document.getElementById('diaChi').textContent = getUrlParameter('dia_chi') || '';
+            document.getElementById('sdt').textContent = getUrlParameter('sdt') || '';
+            document.getElementById('noiDungXuat').textContent = getUrlParameter('noi_dung_xuat') || '';
+            
+            // Set chữ ký
+            document.getElementById('nguoiLapPhieu').textContent = getUrlParameter('nguoi_lap_phieu') || '';
+            document.getElementById('truongBoPhan').textContent = getUrlParameter('truong_bo_phan') || '';
+            document.getElementById('taiXe').textContent = getUrlParameter('tai_xe') || '';
+            document.getElementById('nguoiNhanHangKy').textContent = getUrlParameter('ten_khach_hang') || '';
+
+            // Load chi tiết hàng hóa
+            loadItemsFromUrl();
+        }
+
+        // Hàm load dữ liệu chi tiết từ object
+        function loadItemsFromObject(data) {
+            const tbody = document.getElementById('itemsTableBody');
+            tbody.innerHTML = '';
+
+            let items = [];
+            
+            // Nếu data là array thì dùng luôn, nếu không thì tạo array từ single item
+            if (Array.isArray(data)) {
+                items = data;
+            } else if (data.san_pham_id || data.ten_san_pham) {
+                items = [data];
+            }
+
+            // Hiển thị dữ liệu
+            if (items.length === 0) {
+                // Tạo 5 dòng trống
+                for (let i = 1; i <= 5; i++) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${i}</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    `;
+                    tbody.appendChild(row);
+                }
+            } else {
+                // Hiển thị dữ liệu thực tế
+                items.forEach((item, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${item.san_pham_id || ''}</td>
+                        <td>${item.ten_san_pham || ''}</td>
+                        <td>${item.dvt || ''}</td>
+                        <td>${item.sl_xuat || ''}</td>
+                        <td>${item.ghi_chu || ''}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                // Thêm dòng trống để đủ 5 dòng
+                while (tbody.children.length < 5) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${tbody.children.length + 1}</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    `;
+                    tbody.appendChild(row);
+                }
+            }
+
+            // Thêm dòng tổng cộng
+            const totalRow = document.createElement('tr');
+            totalRow.className = 'total-row';
+            
+            // Tính tổng số lượng
+            let totalQuantity = 0;
+            items.forEach(item => {
+                const qty = parseFloat(item.sl_xuat) || 0;
+                totalQuantity += qty;
+            });
+            
+            totalRow.innerHTML = `
+                <td colspan="4" style="text-align: left; padding-left: 10px;">Tổng Cộng:</td>
+                <td style="font-weight: bold;">${totalQuantity || ''}</td>
+                <td></td>
+            `;
+            tbody.appendChild(totalRow);
+        }
+
+        // Hàm load dữ liệu chi tiết từ URL
+        function loadItemsFromUrl() {
+            const tbody = document.getElementById('itemsTableBody');
+            tbody.innerHTML = '';
+
+            let items = [];
+            
+            // Cách 1: Dữ liệu JSON từ parameter 'items' (cho multiple products)
+            const itemsJson = getUrlParameter('items');
+            if (itemsJson) {
+                try {
+                    items = JSON.parse(itemsJson);
+                } catch (e) {
+                    console.error('Error parsing items JSON:', e);
+                    console.log('Raw items data:', itemsJson);
+                }
+            }
+            
+            // Cách 2: Dữ liệu từ single parameters (cho 1 product)
+            if (items.length === 0) {
+                const sanPhamId = getUrlParameter('san_pham_id');
+                const tenSanPham = getUrlParameter('ten_san_pham');
+                const dvt = getUrlParameter('dvt');
+                const slXuat = getUrlParameter('sl_xuat');
+                const ghiChu = getUrlParameter('ghi_chu');
+
+                if (sanPhamId || tenSanPham) {
+                    items = [{
+                        san_pham_id: sanPhamId,
+                        ten_san_pham: tenSanPham,
+                        dvt: dvt,
+                        sl_xuat: slXuat,
+                        ghi_chu: ghiChu
+                    }];
+                }
+            }
+
+            // Hiển thị dữ liệu
+            if (items.length === 0) {
+                // Tạo 5 dòng trống để phù hợp với form
+                for (let i = 1; i <= 5; i++) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${i}</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    `;
+                    tbody.appendChild(row);
+                }
+            } else {
+                // Hiển thị dữ liệu thực tế
+                items.forEach((item, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${item.san_pham_id || ''}</td>
+                        <td>${item.ten_san_pham || ''}</td>
+                        <td>${item.dvt || ''}</td>
+                        <td>${item.sl_xuat || ''}</td>
+                        <td>${item.ghi_chu || ''}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                // Thêm dòng trống để đủ ít nhất 5 dòng
+                while (tbody.children.length < 5) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${tbody.children.length + 1}</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    `;
+                    tbody.appendChild(row);
+                }
+            }
+
+            // Thêm dòng tổng cộng
+            const totalRow = document.createElement('tr');
+            totalRow.className = 'total-row';
+            
+            // Tính tổng số lượng
+            let totalQuantity = 0;
+            items.forEach(item => {
+                const qty = parseFloat(item.sl_xuat) || 0;
+                totalQuantity += qty;
+            });
+            
+            // Nếu không có items từ JSON, lấy từ single parameter
+            if (items.length === 0) {
+                const singleQty = parseFloat(getUrlParameter('sl_xuat')) || 0;
+                totalQuantity = singleQty;
+            }
+            
+            totalRow.innerHTML = `
+                <td colspan="4" style="text-align: left; padding-left: 10px;">Tổng Cộng:</td>
+                <td style="font-weight: bold;">${totalQuantity || ''}</td>
+                <td></td>
+            `;
+            tbody.appendChild(totalRow);
+        }
+
+        // Hàm in
+        function printForm() {
+            window.print();
+        }
+
+        // Hàm xuất PDF
+        function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const element = document.getElementById('printArea');
+            
+            html2canvas(element, {
+                scale: 2,
+                useCORS: true,
+                allowTaint: true
+            }).then(function(canvas) {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                
+                const imgWidth = 210;
+                const pageHeight = 295;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                let heightLeft = imgHeight;
+                
+                let position = 0;
+                
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+                
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+                
+                const fileName = `Phieu_xuat_kho_${document.getElementById('xuatKhoId').textContent || 'unknown'}.pdf`;
+                pdf.save(fileName);
+            });
+        }
+
+        // API để load dữ liệu từ bên ngoài
+        window.loadPhieuXuatKho = function(data) {
+            loadDataFromObject(data);
+        };
+
+        // Load dữ liệu khi trang được tải
+        window.onload = function() {
+            loadDataFromUrl();
+        };
+    </script>
+</body>
+</html>
